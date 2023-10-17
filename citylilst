@@ -1,0 +1,44 @@
+city_list = [
+'武汉', 
+'北京', 
+'杭州', 
+'广州', 
+'哈尔滨', 
+'呼和浩特', 
+'昆明', 
+'南京'
+'长春'
+'福州'
+'海口'
+'合肥'
+'济南'
+'南昌'
+'南宁'
+'沈阳'
+'太原'
+'天津'
+'西宁'
+'银川'
+]
+city_dict = {
+'武汉': 'wuhan', 
+'北京': 'beijing',
+ '杭州': 'hangzhou', 
+'广州': 'guangzhou', 
+'哈尔滨': 'haerbin', 
+'呼和浩特': 'huhehaote', 
+'昆明': 'kunming', 
+'南京': 'nanjin'
+'长春':'changchun'
+'福州':'fuzhou'
+'海口':'haikou'
+'合肥':'hefei'
+'济南':'jinan'
+'南昌':'nanchang'
+'南宁':'nanning'
+'沈阳':'shenyang'
+'太原':'taiyuan'
+'天津':'tianjin'
+'西宁':'xining'
+'银川':'yinchuan'
+}
