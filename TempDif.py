@@ -16,20 +16,17 @@ def read_excel(file_name):
 
 #4种不同的情况
 def split_list(list):
-    list_1=[]
     list_2=[]
     list_3=[]
     list_4=[]
     for i in list:
-        if i[0]>30 and i[1]<10:
-            list_1.append(i)
-        elif i[0]>30:
+        if i[0]>30:
             list_2.append(i)
         elif i[1]<10:
             list_3.append(i)
         else:
             list_4.append(i)
-    return list_1,list_2,list_3,list_4
+    return list_2,list_3,list_4
 
 
 def split_x(list):
@@ -45,13 +42,13 @@ def split_diff(list):
     return diff
 
 
-city_list = ['呼和浩特', '武汉', '北京', '杭州', '广州', '哈尔滨', '昆明', '南京','福州','海口','合肥','济南','南昌','南宁','沈阳','太原','天津','西宁','银川','长春']
-city_dict = {'呼和浩特': 'huhehaote','武汉': 'wuhan', '北京': 'beijing', '杭州': 'hangzhou', 
-             '广州': 'guangzhou', '哈尔滨': 'haerbin',  
+city_list = ['武汉', '北京', '杭州', '广州', '哈尔滨', '呼和浩特', '昆明', '南京','福州','海口','合肥','济南','南昌','南宁','沈阳','太原','天津','西宁','银川','长春']
+city_dict = {'武汉': 'wuhan', '北京': 'beijing', '杭州': 'hangzhou', 
+             '广州': 'guangzhou', '哈尔滨': 'haerbin', '呼和浩特': 'huhehaote', 
              '昆明': 'kunming', '南京': 'nanjin','福州':'fuzhou','海口':'haikou','合肥':'hefei','济南':'jinan','南昌':'nanchang','南宁':'nanning','沈阳':'shenyang','太原':'taiyuan','天津':'tianjin','西宁':'xining','银川':'yinchuan','长春':'changchun'}
 
 for city in city_list:
-    file_name =  'city/'+city + "近5年天气数据.xlsx"
+    file_name = city + "近5年天气数据.xlsx"
     data = read_excel(file_name)
     
     # 绘制折线图
@@ -74,15 +71,15 @@ for city in city_list:
     for i in range(len(s)):
         s[i][3]=i+1
 
-    tempdiff_1,tempdiff_2,tempdiff_3,tempdiff_4=split_list(s)
+    tempdiff_2,tempdiff_3,tempdiff_4=split_list(s)
 
     fig, ax = plt.subplots(figsize=(20, 10))
 
     #画图
-    #ax.bar(split_x(tempdiff_1), split_diff(tempdiff_1), color='blue', label='ExtremeDifference')
-    ax.bar(split_x(tempdiff_2), split_diff(tempdiff_2), color='red', label='Hot')
-    ax.bar(split_x(tempdiff_3), split_diff(tempdiff_3), color='blue', label='Cold')
-    ax.bar(split_x(tempdiff_4), split_diff(tempdiff_4), color='green', label='Normal')
+    #ax.bar(split_x(tempdiff_1), split_diff(tempdiff_1), color='orange', label='max>30 && min<10')
+    ax.bar(split_x(tempdiff_2), split_diff(tempdiff_2), color='red', label='max>30',width=1)
+    ax.bar(split_x(tempdiff_3), split_diff(tempdiff_3), color='blue', label='min<10',width=1)
+    ax.bar(split_x(tempdiff_4), split_diff(tempdiff_4), color='green', label='normal',width=1)
    
 
     #画一条水平线
@@ -91,11 +88,11 @@ for city in city_list:
     plt.xticks([]) # 隐藏横坐标刻度值
 
     # 添加图例和标题
-    plt.legend(loc='upper left')
-    plt.title(city_dict[city]+'2016-2020TempDif', fontsize=20)
+    plt.legend(loc='upper right')
+    plt.title(city_dict[city]+'2016-2020 daily temp diff', fontsize=20)
 
     # 保存图像
-    plt.savefig('TempDif/'+city+'.png')
+    plt.savefig(city+'.png')
 
     # 显示图形
     plt.show()
