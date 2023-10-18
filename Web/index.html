@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="echarts.js"></script>
+    <script src="china.js"></script>
+    <style>
+        /* CSS样式来控制图表的位置和大小 */
+        #main {
+            height: 200vh;
+            margin: 0 auto;
+            width: 90%;
+            transform: translate(100px, 30px), scale(1.8);
+        }
+
+        /* CSS样式，用于控制模态框的显示和布局 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            /* opacity: 0; */
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            transform: translateY(-100px);
+            border-radius: 20px;
+            background-color: #e4ffff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            /* overflow: scroll; */
+        }
+
+        #modalBody {
+            display: flex;
+            flex-direction: column;
+        }
+
+        img {
+            width: 80%;
+            height: 500px;
+            margin-left: 120px;
+            margin-bottom: 20px;
+        }
+
+        img.pie {
+            height: 800px;
+        }
+
+        img.bar {
+            height: 600px;
+        }
+
+        img.weather {
+            height: 800px;
+        }
+        img.des {
+            height: 500px;
+            width: 800px;
+            margin-right: 50px;
+            flex: 2;
+            transform: translateX(-50px);
+        }
+
+        .p1 {
+            display: flex;
+            animation: turnup 0.5s ease-in;
+        }
+
+        @keyframes turnup {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        p.des {
+            padding: 20px;
+            border: 2px gray dotted;
+            flex: 1;
+            font-size: 20px;
+            text-indent: 40px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #modalTitle {
+            font-size: 50px;
+            transform: translateX(500px);
+        }
+
+        label,
+        input {
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 200px;
+        }
+
+        .a {
+            opacity: 0;
+            transform: translate(-50px,50px);
+            transition: all 0.5s ease-out;
+        }
+
+        .a.animate {
+            opacity: 1;
+            transform: translate(-50px,0);
+        }
+
+        .p2{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .p2 p{
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- HTML元素，用于显示模态框 -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h5 id="modalTitle"></h5>
+            <div id="modalBody">
+                <div class="p1">
+                    <img src="" alt="" class="des">
+                    <p class="des"></p>
+                </div>
+                <div class="p2">
+                    <h5 style="font-size: 20px;">· 天气信息(横坐标代表时间，2016年至2020年)</h5>
+                    <img src="" alt="" class="mmtemp a">
+                    <p>最高温和最低温折线图（纵坐标单位:℃）</p>
+                    <img src="" alt="" class="tempdiff a">
+                    <p>温差折线图（纵坐标单位:℃）</p>
+                    <img src="" alt="" class="pie a">
+                    <p>空气质量饼图</p>
+                    <img src="" alt="" class="bar a">
+                    <p>空气质量柱状图（小于50优 小于100良 小于150轻度污染 小于200中度污染 小于300重度污染 大于300严重污染）</p>
+                    <img src="" alt="" class="weather a">
+                    <p>各天气占比图</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- echarts图表容器 -->
+    <div id="main"></div>
+
+    <script>
+        const imagess = document.querySelectorAll('.a');
+        var city_descriptions = {
+            "武汉": "武汉位于中国中部，是湖北省的省会，也是长江中游重要的交通枢纽。武汉是一座拥有悠久历史和灿烂文化的城市，有着丰富的自然资源和人文景观。著名的东湖风景区是武汉的地标之一，这里山清水秀，风景如画，是市民休闲娱乐的好去处。此外，武汉还有许多历史古迹，如黄鹤楼、古琴台、古琴台等，吸引着众多游客前来观光。武汉还是一座教育中心，拥有多所知名大学和科研机构。同时，武汉还以美食而闻名，有着丰富多样的湖北菜系和特色小吃，让人流连忘返。",
+            "北京": "北京是中国的首都，也是中国政治、文化、国际交往的中心。作为拥有悠久历史的古都，北京有着丰富的人文景观和世界级的建筑物。著名的故宫是北京的代表性景点之一，是中国古代宫殿建筑的杰作，吸引着无数游客慕名而来。北京还有长城、天安门广场、颐和园等众多知名景点，展示着悠久的历史和独特的文化魅力。此外，北京还拥有丰富多样的艺术和文化活动，有着众多的博物馆、剧院和艺术团体。同时，北京还是中国的科技创新中心，拥有众多高等院校和科研机构。北京的美食也非常有特色，有着烤鸭、炸酱面等传统美食。",
+            "杭州": "杭州位于中国东南沿海地区，是浙江省的省会，被誉为“人间天堂”和“丝绸之府”。杭州有着悠久的历史和丰富的文化底蕴，是中国优秀的旅游目的地之一。西湖是杭州的标志性景点，被联合国教科文组织列为世界文化遗产，其美丽的自然风光和悠久的历史吸引了无数游客前来观光。杭州还有许多古建筑和庙宇，如灵隐寺、岳王庙等，体现了中国传统文化的魅力。此外，杭州还是中国著名的茶叶产区，龙井茶享誉全球，吸引着众多茶叶爱好者。杭州的美食也非常有特色，有着著名的叫花鸡、东坡肉等美味佳肴。",
+            "广州": "广州位于中国南方，是广东省的省会，也是中国最繁华、最具活力的城市之一。广州拥有悠久的历史和丰富的文化底蕴，是一座融合了传统和现代的现代化大都市。广州塔是广州的地标之一，这座高塔提供了壮观的城市全景，吸引着无数游客的目光。广州还有许多历史古迹和文化景点，如光孝寺、陈家祠等，展示了广州独特的历史和文化特色。广州是中国著名的美食城市，有着丰富多样的粤菜和地方小吃，让人流连忘返。此外，广州还是商业和贸易中心，吸引着众多国内外企业和投资者。",
+            "哈尔滨": "哈尔滨位于中国东北，是黑龙江省的省会，以冰雪艺术和温泉资源而闻名。哈尔滨拥有丰富的自然资源和独特的民俗文化，是中国重要的旅游目的地之一。哈尔滨的冰雪节每年都吸引着无数游客前来观赏，其中的冰灯艺术表演和冰雕展览堪称壮观。哈尔滨还有许多温泉度假村，如五常温泉、太阳岛温泉等，提供了放松身心的好去处。此外，哈尔滨融合了中俄两种文化，保留了许多俄式建筑和风俗，给人们带来了不同寻常的体验。哈尔滨的美食也非常有特色，有着著名的俄式菜肴和东北家常菜。",
+            "呼和浩特": "呼和浩特位于中国北方，是内蒙古自治区的首府，以其独特的草原文化吸引着游客。呼和浩特拥有广袤的草原和丰富的自然资源，是中国著名的旅游胜地之一。赛罕塔是呼和浩特的地标之一，是内蒙古最高的砖塔，提供了壮观的城市全景。呼和浩特还有许多著名的草原景点，如格格花海、五塔寺等，展示了草原风光的壮美和独特的民族文化。此外，呼和浩特还是蒙古族和汉族文化的交汇地，各种传统节日和活动吸引着众多游客参与。呼和浩特的美食也非常有特色，有着著名的羊肉火锅和蒙古包子等美味佳肴。",
+            "昆明": "昆明位于中国西南，是云南省的省会，享有“春城”的美誉，气候宜人，风景秀丽。昆明拥有丰富多样的自然风光和独特的民族文化，是中国重要的旅游目的地之一。翠湖是昆明的地标之一，这里水天一色，风景如画，是市民休闲娱乐的好去处。昆明还有许多著名的风景名胜，如滇池、石林等，展示了云南迷人的自然景观。昆明是中国少数民族聚集地之一，有着丰富多彩的民族文化和传统节日，吸引着众多游客前来体验。昆明的美食也非常有特色，有着著名的过桥米线和云南菜等美味佳肴。",
+            "南京": "南京位于中国东部，是江苏省的省会，曾经是中国历史上重要的都城之一。南京拥有悠久的历史和丰富的文化遗产，有着许多著名的历史古迹和文化景点。夫子庙是南京的标志性景点之一，这里保存着明代的建筑和文化，吸引着无数游客的目光。南京还有许多历史博物馆和纪念馆，如中山陵、南京大屠杀纪念馆等，展示了南京丰富的历史和文化内涵。此外，南京还是一座现代化城市，拥有繁华的商业街和现代化的建筑群。南京的美食也非常有特色，有着著名的盐水鸭和扬州炒饭等传统美食。",
+            "长春": "长春位于中国东北，是吉林省的省会，以汽车工业和冰雪旅游而闻名。长春是中国重要的汽车制造中心，拥有众多知名汽车品牌和汽车工厂，被誉为“中国的汽车城”。除了汽车产业，长春还以其美丽的冬季景色而著名。冬天时，长春的城市公园、湖泊和街道都被雪覆盖，形成了迷人的冰雪世界，吸引着众多游客来此观赏和体验冰雪活动。长春还拥有丰富多样的冰雪项目和设施，如冰雪大世界、冰灯艺术展等，让人们能够尽情享受冰雪运动的乐趣。此外，长春还有许多历史文化遗迹和景点，如南湖公园、长春影视城等，展示了长春悠久的历史和独特的文化魅力。长春的美食也非常有特色，有着著名的长春红烧肉、延边冷面等美味佳肴。",
+
+            "福州": "福州位于中国东南沿海地区，是福建省的省会。福州拥有悠久的历史和独特的闽南文化。这座城市有着众多古老的寺庙、园林和传统建筑，如三坊七巷、鼓山、夫妻树等，展现了福州独特的历史和文化底蕴。福州还以其丰富的海鲜和闽菜而闻名，如福州鱼丸、鳝鱼粥等都是当地的特色美食。此外，福州还有许多美丽的自然景观，如鼓岭、西湖公园等，供人们休闲和观赏。",
+
+            "海口": "海口位于中国南海岸，是海南省的省会。这座城市拥有美丽的海滩和热带气候，吸引了大量游客前来度假和观光。海口还有许多独特的景点，如分界洲岛、南山文化旅游区等，展示了海口的风土人情和自然风光。此外，海口还是海南的政治、经济和文化中心，拥有现代化的城市设施和丰富的历史遗迹。",
+
+            "合肥": "合肥位于中国东部，是安徽省的省会，也是中国科技创新的重要城市之一。合肥拥有众多高校和科研机构，培养了大量的科学家和工程师。这座城市还有许多科技园区和高新技术企业，成为中国的科技创新中心之一。合肥的旅游资源也很丰富，如巢湖、庐州庙等，给人们提供了休闲和观光的好去处。",
+
+            "济南": "济南位于中国东部，是山东省的省会，以泉水、历史文化和山东菜闻名。济南有着丰富的泉水资源，如趵突泉、黑虎泉等，给城市增添了独特的韵味。这里还有许多历史古迹和文化景点，如大明湖、千佛山等，展示了济南悠久的历史和灿烂的文化。济南菜以其清淡爽口而闻名，有着诸多美食如“四必”（四必湖羊、四必泉水鸡、四必驴肉、四必母猪肘子）等。",
+
+            "南昌": "南昌位于中国东部，是江西省的省会，拥有丰富的红色革命文化遗址。南昌是中国共产党的诞生地之一，有着重要的革命历史意义。这座城市有众多红色旅游景点，如八一起义纪念馆、井冈山革命根据地等，吸引着许多革命历史爱好者和游客前来参观。南昌还有美丽的自然风光，如滕王阁、秋水广场等，供人们休闲和欣赏。",
+
+            "南宁": "南宁位于中国南方，是广西壮族自治区的首府，被誉为“绿城”和“园城”。这座城市拥有丰富的自然资源和独特的民族风情。南宁周围有着壮族等多个少数民族的聚居地，为城市增添了浓厚的民族特色和文化魅力。南宁还有许多优美的公园和花园，如青秀山、明秀珍珠水岸等，供人们休闲和观赏。此外，南宁也是广西的经济中心和交通枢纽，具有重要的地位。",
+
+            "沈阳": "沈阳位于中国东北，是辽宁省的省会，有着深厚的历史底蕴和丰富的文化景观。这座城市拥有许多历史古迹和建筑遗址，如沈阳故宫、沈阳市古文化街等，展示了沈阳悠久的历史和独特的文化魅力。沈阳还以其丰富的剧院、美食和购物场所而著名，如沈阳草莓音乐季、沈阳著名小吃等都吸引了众多游客前来体验。",
+
+            "太原": "太原位于中国北方，是山西省的省会，以煤炭资源和古代建筑而著名。太原是中国重要的煤炭生产基地，拥有丰富的煤炭储量。这座城市还有许多古老的建筑和文物，如悬空寺、云冈石窟等，展现了太原悠久的历史和独特的建筑风格。太原的特色美食也很有名气，如刀削面、太原菜等，深受游客和当地人喜爱。",
+
+            "天津": "天津位于中国北方沿海地区，是直辖市之一，是中国重要的港口和经济中心。天津有着悠久的历史和独特的城市风貌，其建筑融合了中西方的设计风格，形成了独特的特色。这座城市有许多著名的景点和历史遗迹，如天津之眼、意式风情区等，吸引了大量游客前来观光和购物。天津还以其特色小吃而闻名，如狗不理包子、耳朵眼炸糕等都是当地的传统美食。",
+
+            "西宁": "西宁位于中国西北，是青海省的省会，被誉为“夏都”，是游览青藏高原的重要起点。这座城市拥有丰富的自然景观和独特的藏族文化。西宁周围有着美丽的湖泊、草原和雪山，如青海湖、茶卡盐湖等，供人们欣赏和探索。这里还有许多藏族寺庙和文化遗址，如塔尔寺、茶卡寺等，展示了西宁深厚的宗教和文化底蕴。",
+
+            "银川": "银川位于中国西北，是宁夏回族自治区的首府。这座城市拥有丰富的历史和文化遗产，深受游客的喜爱。银川以其独特的地理位置和多元的文化背景而闻名。银川有着悠久的历史，是中国古代丝绸之路上的重要节点之一。这里有许多历史建筑和古迹，如鼓楼、南门大街等，展示了银川悠久的历史和建筑风格。银川还有宁夏博物馆，陈列着大量宁夏地区的历史文物和艺术品，带人们了解当地的文化和历史。",
+        }
+
+        var data = [
+            { name: '北京', city: '北京' },
+            { name: '广东', city: '广州' },
+            { name: '湖北', city: '武汉' },
+            { name: '浙江', city: '杭州' },
+            { name: '黑龙江', city: '哈尔滨' },
+            { name: '内蒙古', city: '呼和浩特' },
+            { name: '云南', city: '昆明' },
+            { name: '江苏', city: '南京' },
+            { name: '吉林', city: '长春' },
+            { name: '福建', city: '福州' },
+            { name: '海南', city: '海口' },
+            { name: '安徽', city: '合肥' },
+            { name: '山东', city: '济南' },
+            { name: '江西', city: '南昌' },
+            { name: '广西', city: '南宁' },
+            { name: '辽宁', city: '沈阳' },
+            { name: '山西', city: '太原' },
+            { name: '天津', city: '天津' },
+            { name: '青海', city: '西宁' },
+            { name: '宁夏', city: '银川' },
+        ];
+        var myChart = echarts.init(document.getElementById('main'));
+        var option = {
+            series: [
+                {
+                    name: '省份',
+                    type: 'map',
+                    map: 'china',
+                    roam: false,
+                    label: {
+                        show: false,
+                    },
+                    data: [
+                        {
+                            name: '北京', itemStyle: {
+                                normal: {
+                                    areaColor: '#eb4d4b'
+                                }
+                            }
+                        },
+                        {
+                            name: '上海', itemStyle: {
+                                normal: {
+                                    areaColor: '#eb4d4b'
+                                }
+                            }
+                        },
+                        {
+                            name: '广东', itemStyle: {
+                                normal: {
+                                    areaColor: '#eb4d4b'
+                                }
+                            }
+                        },
+                        {
+                            name: '青海', itemStyle: {
+                                normal: {
+                                    areaColor: '#badc58'
+                                }
+                            }
+                        },
+                        {
+                            name: '天津', itemStyle: {
+                                normal: {
+                                    areaColor: '#badc58'
+                                }
+                            }
+                        },
+                        {
+                            name: '福建', itemStyle: {
+                                normal: {
+                                    areaColor: '#badc58'
+                                }
+                            }
+                        },
+                        {
+                            name: '江苏', itemStyle: {
+                                normal: {
+                                    areaColor: '#c7ecee'
+                                }
+                            }
+                        },
+                        {
+                            name: '湖北', itemStyle: {
+                                normal: {
+                                    areaColor: '#c7ecee'
+                                }
+                            }
+                        },
+                        {
+                            name: '新疆', itemStyle: {
+                                normal: {
+                                    areaColor: '#c7ecee'
+                                }
+                            }
+                        },
+                        {
+                            name: '云南',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#7ed6df'
+                                }
+                            }
+                        },
+                        {
+                            name: '甘肃',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#7ed6df'
+                                }
+                            }
+                        },
+                        {
+                            name: '黑龙江',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#7ed6df'
+                                }
+                            }
+                        },
+                        {
+                            name: '西藏',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f9ca24'
+                                }
+                            }
+                        },
+                        {
+                            name: '吉林',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f9ca24'
+                                }
+                            }
+                        },
+                        {
+                            name: '浙江',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f9ca24'
+                                }
+                            }
+                        },
+                        {
+                            name: '内蒙古',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f6e58d'
+                                }
+                            }
+                        },
+                        {
+                            name: '河南',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f6e58d'
+                                }
+                            }
+                        },
+                        {
+                            name: '四川',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#f6e58d'
+                                }
+                            }
+                        },
+                        {
+                            name: '广西',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#ff7979'
+                                }
+                            }
+                        },
+                        {
+                            name: '陕西',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#ff7979'
+                                }
+                            }
+                        },
+                        {
+                            name: '山东',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#ff7979'
+                                }
+                            }
+                        }, {
+                            name: '宁夏',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#54ff9f'
+                                }
+                            }
+                        }, {
+                            name: '贵州',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#54ff9f'
+                                }
+                            }
+                        }, {
+                            name: '海南',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#54ff9f'
+                                }
+                            }
+                        },
+                        {
+                            name: '台湾',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#00ced1'
+                                }
+                            }
+                        },
+                        {
+                            name: '江西',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#00ced1'
+                                }
+                            }
+                        },
+                        {
+                            name: '山西',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#00ced1'
+                                }
+                            }
+                        },
+                        {
+                            name: '重庆',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#fff68f'
+                                }
+                            }
+                        },
+                        {
+                            name: '安徽',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#fff68f'
+                                }
+                            }
+                        },
+                        {
+                            name: '河北',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#fff68f'
+                                }
+                            }
+                        },
+                        {
+                            name: '湖南',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#bc8f8f'
+                                }
+                            }
+                        },
+                        {
+                            name: '辽宁',
+                            itemStyle: {
+                                normal: {
+                                    areaColor: '#bc8f8f'
+                                }
+                            }
+                        },
+                    ]
+                }
+            ],
+            tooltip: {
+                trigger: 'item',
+                formatter: function (params) {
+                    var province = params.name; // 获取省份名称
+                    var city = ''; // 城市名称
+                    // 查找对应的城市名称
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].name === province) {
+                            city = data[i].city;
+                            break;
+                        }
+                    }
+                    return city; // 返回省份和城市信息
+                }
+            },
+        };
+        myChart.setOption(option);
+        function getCity(province) {
+            var flag = 0;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].name === province) {
+                    city = data[i].city;
+                    flag = 1;
+                    break;
+                }
+            }
+            if (flag)
+                return city; // 返回省份和城市信息
+            else return '';
+        }
+        // 在echarts初始化完成后，添加点击事件监听
+        myChart.on('click', function (params) {
+            if (params.componentType === 'series') {
+                var province = params.name; // 获取点击的省份名称
+                console.log(province, getCity(province));
+                if (getCity(province) !== '')
+                    showModal(getCity(province)); // 调用函数显示模态框
+            }
+        });
+
+        // 显示模态框的函数
+        function showModal(province) {
+            imagess.forEach(e=>e.classList.remove('animate'));
+            var modal = document.getElementById('myModal');
+            var modalTitle = document.getElementById('modalTitle');
+            var modalBody = document.getElementById('modalBody');
+            var mmtemp = document.querySelector('.mmtemp');
+            var tempdiff = document.querySelector('.tempdiff');
+            var pie = document.querySelector('.pie');
+            var bar = document.querySelector('.bar');
+            var weather = document.querySelector('.weather');
+            var des = document.querySelector('.des');
+            var pdes = document.querySelector('p.des');
+            pdes.innerHTML = city_descriptions[`${province}`];
+            des.src = `images/pics/${province}.jpeg`;
+            mmtemp.src = `images/mmtemp/${province}.png`;
+            tempdiff.src = `images/tempdiff/${province}.png`;
+            pie.src = `images/pie/${province}_air_quality.png`;
+            bar.src = `images/bar/${province}.png`;
+            weather.src = `images/weather/${province}天气分布.png`;
+            // modal.classList.add('modal-visible');
+            modal.style.display = 'block';
+            modalTitle.innerText = `${province}`;
+            var closeBtn = document.getElementsByClassName('close')[0];
+            closeBtn.onclick = function () {
+                modal.style.display = 'none';
+                // modal.classList.remove('modal-visible');
+            };
+
+            window.onclick = function (event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            let windowHeight = window.innerHeight;
+            document.querySelector('.modal').addEventListener('scroll', function () {
+                console.log('a');
+                imagess.forEach((e) => {
+                    // console.log(itemPosition.top,windowHeight);
+                    let itemPosition = e.getBoundingClientRect();
+                    if (itemPosition.top < windowHeight * 3 / 4) {
+                        e.classList.add('animate');
+                    }
+                })
+
+            });
+        }
+    </script>
+</body>
+
+</html>
