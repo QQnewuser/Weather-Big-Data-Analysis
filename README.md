@@ -1,3 +1,3 @@
 # Weather-Big-Data-Analysis
-The homework of BIG_DATA_ANALYSIS_CLASS.
-by——佛组
+The program of BIG_DATA_ANALYSIS.
+by——Qi Qin
